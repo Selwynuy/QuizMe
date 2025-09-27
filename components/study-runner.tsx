@@ -20,20 +20,74 @@ export function StudyRunner({ deckId }: { deckId: string }) {
   const [elapsedMs, setElapsedMs] = useState(0)
   const timerRef = useRef<number | null>(null)
 
+  // Get session key for this deck
+  const sessionKey = `study_session_${deckId}`
+
+  // Get seen cards from localStorage
+  const getSeenCards = () => {
+    try {
+      const stored = localStorage.getItem(sessionKey)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  }
+
+  // Add card to seen list
+  const markCardAsSeen = (cardId: string) => {
+    const seen = getSeenCards()
+    if (!seen.includes(cardId)) {
+      const updated = [...seen, cardId]
+      localStorage.setItem(sessionKey, JSON.stringify(updated))
+    }
+  }
+
+  // Check if all cards have been seen
+  const checkSessionComplete = async () => {
+    const seen = getSeenCards()
+    const res = await fetch(`/api/cards?deckId=${deckId}`)
+    const data = await res.json()
+    const totalCards = data.cards?.length || 0
+    return seen.length >= totalCards
+  }
+
   async function loadNext(excludeId?: string) {
     setLoading(true)
     setError(null)
-    const qs = new URLSearchParams({ deckId })
-    if (excludeId) qs.set('exclude', excludeId)
-    const res = await fetch(`/api/study/next?${qs.toString()}`)
-    const j = await res.json()
-    setLoading(false)
-    if (!res.ok) {
-      setError(j.error || 'Failed')
+
+    // Check if session is complete
+    const isComplete = await checkSessionComplete()
+    if (isComplete) {
+      setCard(null)
+      setLoading(false)
       return
     }
-    setCard(j.card || null)
+
+    // Get all cards and filter out seen ones client-side
+    const res = await fetch(`/api/cards?deckId=${deckId}`)
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error || 'Failed to load cards')
+      setLoading(false)
+      return
+    }
+
+    const allCards = data.cards || []
+    const seen = getSeenCards()
+    const availableCards = allCards.filter(
+      (card) => !seen.includes(card.id) && (!excludeId || card.id !== excludeId),
+    )
+
+    if (availableCards.length === 0) {
+      setCard(null)
+      setLoading(false)
+      return
+    }
+
+    // Simple selection: first available card
+    setCard(availableCards[0])
     setFlipped(false)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -49,7 +103,8 @@ export function StudyRunner({ deckId }: { deckId: string }) {
     })
     setSeenCount((n) => n + 1)
     if (g >= 2) setCorrectCount((n) => n + 1)
-    await loadNext(card.id)
+    markCardAsSeen(card.id)
+    await loadNext() // No need to pass card.id since we filter client-side
   }
 
   // keyboard shortcuts
@@ -119,11 +174,17 @@ export function StudyRunner({ deckId }: { deckId: string }) {
       {error && <div className="text-sm text-[--color-error]">{error}</div>}
       {!loading && !card && (
         <div className="space-y-4">
-          <div className="text-sm text-[--color-text-secondary]">No more cards due. Nice work!</div>
-          <div className="text-sm">
-            Seen: {seenCount} • Accuracy: {accuracy}% • Time: {Math.floor(elapsedMs / 60000)}:
-            {String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}
+          <div className="text-sm text-[--color-text-secondary]">
+            {seenCount === 0
+              ? 'No cards found in this deck. Add some cards to start studying!'
+              : 'No more cards due. Nice work!'}
           </div>
+          {seenCount > 0 && (
+            <div className="text-sm">
+              Seen: {seenCount} • Accuracy: {accuracy}% • Time: {Math.floor(elapsedMs / 60000)}:
+              {String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}
+            </div>
+          )}
           <div>
             <Button
               variant="outline"
@@ -131,11 +192,12 @@ export function StudyRunner({ deckId }: { deckId: string }) {
                 setSeenCount(0)
                 setCorrectCount(0)
                 setElapsedMs(0)
+                localStorage.removeItem(sessionKey) // Clear session
                 setSessionActive(true)
                 loadNext()
               }}
             >
-              Start New Session
+              {seenCount === 0 ? 'Try Again' : 'Start New Session'}
             </Button>
           </div>
         </div>
@@ -187,7 +249,16 @@ export function StudyRunner({ deckId }: { deckId: string }) {
               <Button size="lg" className="min-w-40" onClick={() => setFlipped((v) => !v)}>
                 {flipped ? 'Hide Answer' : 'Show Answer'} (Space)
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => card && loadNext(card.id)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (card) {
+                    markCardAsSeen(card.id)
+                    loadNext()
+                  }
+                }}
+              >
                 Skip
               </Button>
               <div className="ml-auto" />

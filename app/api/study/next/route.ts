@@ -12,7 +12,27 @@ export async function GET(request: Request) {
 
   let card
 
-  // 1) due cards excluding current
+  // Get all cards in the deck
+  const { data: allCards } = await supabase
+    .from('cards')
+    .select('*')
+    .eq('deck_id', deckId)
+    .order('created_at', { ascending: true })
+
+  if (!allCards || allCards.length === 0) {
+    return NextResponse.json({ card: null, debug: { totalCards: 0 } })
+  }
+
+  // Simple approach: just exclude the current card
+  const availableCards = allCards.filter((c) => !exclude || c.id !== exclude)
+
+  // Debug info
+  console.log(`Deck ${deckId} has ${allCards.length} cards total`)
+  if (exclude) {
+    console.log(`Excluding card ${exclude}`)
+  }
+
+  // 1) due cards
   {
     const { data: due } = await supabase
       .from('reviews')
@@ -21,44 +41,32 @@ export async function GET(request: Request) {
       .eq('deck_id', deckId)
       .lt('due_at', new Date().toISOString())
       .order('due_at', { ascending: true })
-      .limit(10)
-    const candidate = (due || []).find((d) => !exclude || d.card_id !== exclude)
-    if (candidate) {
-      const { data } = await supabase.from('cards').select('*').eq('id', candidate.card_id).single()
-      card = data
+
+    const dueCardIds = (due || []).map((d) => d.card_id)
+    const dueCards = availableCards.filter((c) => dueCardIds.includes(c.id))
+    if (dueCards.length > 0) {
+      card = dueCards[0]
     }
   }
 
-  // 2) unseen (no reviews by anyone) excluding current
+  // 2) unseen (no reviews by this user)
   if (!card) {
-    const { data: unseen } = await supabase
-      .from('cards')
-      .select('id, front, back, deck_id, created_at, updated_at, reviews!left(id)')
-      .eq('deck_id', deckId)
-      .is('reviews.id', null)
-      .order('created_at', { ascending: true })
-      .limit(10)
-    const candidate = (unseen || []).find((c) => !exclude || c.id !== exclude)
-    if (candidate) {
-      const { data } = await supabase.from('cards').select('*').eq('id', candidate.id).single()
-      card = data
-    }
-  }
-
-  // 3) soonest upcoming for this user excluding current
-  if (!card) {
-    const { data: upcoming } = await supabase
+    const { data: reviewedCards } = await supabase
       .from('reviews')
-      .select('card_id, due_at')
+      .select('card_id')
       .eq('user_id', user.user.id)
       .eq('deck_id', deckId)
-      .order('due_at', { ascending: true })
-      .limit(10)
-    const candidate = (upcoming || []).find((u) => !exclude || u.card_id !== exclude)
-    if (candidate) {
-      const { data } = await supabase.from('cards').select('*').eq('id', candidate.card_id).single()
-      card = data
+
+    const reviewedCardIds = (reviewedCards || []).map((r) => r.card_id)
+    const unseenCards = availableCards.filter((c) => !reviewedCardIds.includes(c.id))
+    if (unseenCards.length > 0) {
+      card = unseenCards[0]
     }
+  }
+
+  // 3) any remaining available cards
+  if (!card && availableCards.length > 0) {
+    card = availableCards[0]
   }
 
   if (!card) return NextResponse.json({ card: null })
