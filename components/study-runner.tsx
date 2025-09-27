@@ -18,6 +18,8 @@ export function StudyRunner({ deckId }: { deckId: string }) {
   const [sessionActive, setSessionActive] = useState(true)
   const [startTs] = useState(() => Date.now())
   const [elapsedMs, setElapsedMs] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [sessionCards, setSessionCards] = useState<Card[]>([])
   const timerRef = useRef<number | null>(null)
 
   // Get session key for this deck
@@ -45,15 +47,62 @@ export function StudyRunner({ deckId }: { deckId: string }) {
   // Check if all cards have been seen
   const checkSessionComplete = async () => {
     const seen = getSeenCards()
+    return seen.length >= sessionCards.length
+  }
+
+  // Load all cards for the session
+  const loadSessionCards = async () => {
     const res = await fetch(`/api/cards?deckId=${deckId}`)
     const data = await res.json()
-    const totalCards = data.cards?.length || 0
-    return seen.length >= totalCards
+    if (!res.ok) {
+      setError(data.error || 'Failed to load cards')
+      return []
+    }
+    return data.cards || []
+  }
+
+  // Navigate to a specific card in the session
+  const navigateToCard = (index: number) => {
+    if (sessionCards.length === 0) return
+
+    const targetIndex = Math.max(0, Math.min(index, sessionCards.length - 1))
+    setCurrentIndex(targetIndex)
+    setCard(sessionCards[targetIndex])
+    setFlipped(false)
+  }
+
+  // Navigate to next/previous card
+  const navigateNext = () => {
+    if (currentIndex < sessionCards.length - 1) {
+      navigateToCard(currentIndex + 1)
+    }
+  }
+
+  const navigatePrevious = () => {
+    if (currentIndex > 0) {
+      navigateToCard(currentIndex - 1)
+    }
   }
 
   async function loadNext(excludeId?: string) {
     setLoading(true)
     setError(null)
+
+    // If no session cards loaded yet, load them
+    if (sessionCards.length === 0) {
+      const allCards = await loadSessionCards()
+      if (allCards.length === 0) {
+        setCard(null)
+        setLoading(false)
+        return
+      }
+      setSessionCards(allCards)
+      setCurrentIndex(0)
+      setCard(allCards[0])
+      setFlipped(false)
+      setLoading(false)
+      return
+    }
 
     // Check if session is complete
     const isComplete = await checkSessionComplete()
@@ -63,19 +112,9 @@ export function StudyRunner({ deckId }: { deckId: string }) {
       return
     }
 
-    // Get all cards and filter out seen ones client-side
-    const res = await fetch(`/api/cards?deckId=${deckId}`)
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || 'Failed to load cards')
-      setLoading(false)
-      return
-    }
-
-    const allCards = data.cards || []
     const seen = getSeenCards()
-    const availableCards = allCards.filter(
-      (card) => !seen.includes(card.id) && (!excludeId || card.id !== excludeId),
+    const availableCards = sessionCards.filter(
+      (card: Card) => !seen.includes(card.id) && (!excludeId || card.id !== excludeId),
     )
 
     if (availableCards.length === 0) {
@@ -84,9 +123,17 @@ export function StudyRunner({ deckId }: { deckId: string }) {
       return
     }
 
-    // Simple selection: first available card
-    setCard(availableCards[0])
-    setFlipped(false)
+    // Find next available card
+    const nextIndex = sessionCards.findIndex(
+      (c) => !seen.includes(c.id) && (!excludeId || c.id !== excludeId),
+    )
+
+    if (nextIndex !== -1) {
+      setCurrentIndex(nextIndex)
+      setCard(sessionCards[nextIndex])
+      setFlipped(false)
+    }
+
     setLoading(false)
   }
 
@@ -95,38 +142,44 @@ export function StudyRunner({ deckId }: { deckId: string }) {
   }, [deckId])
 
   async function grade(g: 0 | 1 | 2 | 3) {
-    if (!card) return
-    await fetch('/api/study/review', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deckId, cardId: card.id, grade: g }),
-    })
-    setSeenCount((n) => n + 1)
-    if (g >= 2) setCorrectCount((n) => n + 1)
-    markCardAsSeen(card.id)
-    await loadNext() // No need to pass card.id since we filter client-side
+    if (!card || loading) return
+    setLoading(true)
+    try {
+      await fetch('/api/study/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deckId, cardId: card.id, grade: g }),
+      })
+      setSeenCount((n) => n + 1)
+      if (g >= 2) setCorrectCount((n) => n + 1)
+      markCardAsSeen(card.id)
+      await loadNext() // No need to pass card.id since we filter client-side
+    } finally {
+      setLoading(false)
+    }
   }
 
   // keyboard shortcuts
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (!sessionActive) return
+
+      // Flip card
       if (e.key === ' ' || e.key.toLowerCase() === 'f') {
         e.preventDefault()
         setFlipped((v) => !v)
         return
       }
-      if (!flipped) return
+
+      // Grade shortcuts
       if (e.key === '1') grade(0)
       if (e.key === '2') grade(1)
       if (e.key === '3') grade(2)
       if (e.key === '4') grade(3)
-      if (e.key === 'ArrowLeft') grade(0)
-      if (e.key === 'ArrowRight') grade(3)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [flipped, sessionActive, card])
+  }, [flipped, sessionActive, card, currentIndex, sessionCards.length])
 
   // swipe gestures (basic)
   const touchStartX = useRef<number | null>(null)
@@ -192,6 +245,8 @@ export function StudyRunner({ deckId }: { deckId: string }) {
                 setSeenCount(0)
                 setCorrectCount(0)
                 setElapsedMs(0)
+                setCurrentIndex(0)
+                setSessionCards([])
                 localStorage.removeItem(sessionKey) // Clear session
                 setSessionActive(true)
                 loadNext()
@@ -208,15 +263,19 @@ export function StudyRunner({ deckId }: { deckId: string }) {
             <div className="flex items-center justify-between">
               <CardTitle>Flashcard</CardTitle>
               <div className="text-xs text-[--color-text-secondary]">
-                Seen {seenCount} • {accuracy}% • {Math.floor(elapsedMs / 60000)}:
+                {accuracy}% • {Math.floor(elapsedMs / 60000)}:
                 {String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}
               </div>
             </div>
             <div className="mt-2">
               <Progress
-                value={Math.min(100, seenCount === 0 ? 0 : Math.min(100, (seenCount % 20) * 5))}
+                value={
+                  sessionCards.length > 0 ? Math.round((seenCount / sessionCards.length) * 100) : 0
+                }
               />
-              <div className="mt-1 text-xs text-[--color-text-secondary]">Card {seenCount + 1}</div>
+              <div className="mt-1 text-xs text-[--color-text-secondary]">
+                {seenCount} of {sessionCards.length} cards
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -246,38 +305,50 @@ export function StudyRunner({ deckId }: { deckId: string }) {
               </div>
             </div>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Button size="lg" className="min-w-40" onClick={() => setFlipped((v) => !v)}>
-                {flipped ? 'Hide Answer' : 'Show Answer'} (Space)
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (card) {
-                    markCardAsSeen(card.id)
-                    loadNext()
-                  }
-                }}
-              >
-                Skip
-              </Button>
               <div className="ml-auto" />
               <Button variant="outline" size="sm" onClick={endSession}>
                 End Session
               </Button>
             </div>
-            {flipped && (
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Button variant="destructive" onClick={() => grade(0)}>
-                  Again (1)
+
+            <div className="mt-8 flex flex-col items-center gap-4">
+              <div className="grid grid-cols-4 gap-3 w-full max-w-2xl">
+                <Button
+                  variant="destructive"
+                  onClick={() => grade(0)}
+                  disabled={loading}
+                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white"
+                >
+                  <span className="font-semibold text-base">Again</span>
+                  <span className="text-xs opacity-90">Review in 10m</span>
                 </Button>
-                <Button onClick={() => grade(1)}>Hard (2)</Button>
-                <Button onClick={() => grade(2)}>Good (3)</Button>
-                <Button variant="default" onClick={() => grade(3)}>
-                  Easy (4)
+                <Button
+                  onClick={() => grade(1)}
+                  disabled={loading}
+                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <span className="font-semibold text-base">Hard</span>
+                  <span className="text-xs opacity-90">Review in 6m</span>
+                </Button>
+                <Button
+                  onClick={() => grade(2)}
+                  disabled={loading}
+                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white bg-green-600 hover:bg-green-700"
+                >
+                  <span className="font-semibold text-base">Good</span>
+                  <span className="text-xs opacity-90">Review in 1d</span>
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => grade(3)}
+                  disabled={loading}
+                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <span className="font-semibold text-base">Easy</span>
+                  <span className="text-xs opacity-90">Review in 4d</span>
                 </Button>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       )}
