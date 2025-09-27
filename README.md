@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Flashcard Study App
 
-## Getting Started
+Stack: Next.js App Router, Tailwind v4, Supabase (Auth/Postgres/Storage), OpenAI.
 
-First, run the development server:
+Features
+
+- Password + Google auth (Supabase block)
+- Decks and cards CRUD with RLS
+- PDF upload to Supabase Storage
+- AI flashcard generation (OpenAI)
+- Spaced repetition reviews (SM-2–like)
+- Progress dashboard (7d reviews, accuracy, streak)
+
+Quickstart
+
+1. Install deps
+
+```bash
+npm install
+```
+
+2. Env vars (.env.local)
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=your_anon_key
+OPENAI_API_KEY=your_openai_key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+3. Supabase setup
+
+- Auth → URL Configuration → Site URL: http://localhost:3000
+- Auth → Providers → Google: enable and set Client ID/Secret
+  - Google Console → Credentials → OAuth Client (Web)
+  - Authorized redirect URIs:
+    https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+- Storage: create bucket "uploads" (public not required)
+- Database: run `database/schema.sql` (Supabase SQL editor)
+
+4. Dev
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- / → Landing
+- /auth/login, /auth/sign-up, /auth/forgot-password
+- /dashboard (auth)
+- /decks/new (create)
+- /decks/[id] (manage + share)
+- /study/[id] (reviews)
+- /profile (settings)
 
-## Learn More
+Notes
 
-To learn more about Next.js, take a look at the following resources:
+- Google OAuth redirects to Supabase callback; app lands on /dashboard.
+- For AI gen, paste notes in New Deck and click Generate with AI.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- npm run dev
+- npm run build
+- npm start
