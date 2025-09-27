@@ -12,15 +12,8 @@ export default async function StudyPage({ params }: Props) {
   const { data: deck } = await supabase.from('decks').select('title').eq('id', id).single()
 
   return (
-    <>
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Study Deck: {deck?.title || 'Loading...'}</h1>
-          <div className="text-sm text-[--color-text-secondary]">Session</div>
-        </div>
-        <StudyRunner deckId={id} />
-      </main>
-      <Footer />
-    </>
+    <div className="min-h-screen bg-gray-50">
+      <StudyRunner deckId={id} deckTitle={deck?.title} />
+    </div>
   )
 }

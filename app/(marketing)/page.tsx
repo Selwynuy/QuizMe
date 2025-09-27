@@ -7,10 +7,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { GlobalNavbar } from '@/components/global-navbar'
+import Link from 'next/link'
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <GlobalNavbar />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background Elements */}
@@ -81,8 +84,30 @@ export default function LandingPage() {
                     </p>
                   </div>
                   <HeroClientUploader />
-                  <div className="text-center text-sm text-gray-500">
-                    No signup required for demo
+
+                  {/* Alternative Option */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">or</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <Link href="/decks/new">
+                      <Button
+                        variant="outline"
+                        className="w-full py-3 text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                      >
+                        <span className="mr-2">✏️</span>
+                        Create Deck Manually
+                      </Button>
+                    </Link>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Start with a blank deck and add cards yourself
+                    </p>
                   </div>
                 </div>
               </div>
@@ -208,8 +233,8 @@ export default function LandingPage() {
 
           <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
             {/* Free Plan */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 relative">
-              <div className="text-center">
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 relative flex flex-col">
+              <div className="text-center flex-1 flex flex-col">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-900">$0</span>
@@ -217,7 +242,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-gray-600 mb-8">Perfect for getting started</p>
 
-                <ul className="space-y-4 mb-8 text-left">
+                <ul className="space-y-4 mb-8 text-left flex-1">
                   <li className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path
@@ -270,20 +295,20 @@ export default function LandingPage() {
                   </li>
                 </ul>
 
-                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white">
+                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white mt-auto">
                   Get Started Free
                 </Button>
               </div>
             </div>
 
             {/* Pro Plan */}
-            <div className="bg-white rounded-2xl border-2 border-blue-500 p-8 relative">
+            <div className="bg-white rounded-2xl border-2 border-blue-500 p-8 relative flex flex-col">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                 <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
                   Most Popular
                 </span>
               </div>
-              <div className="text-center">
+              <div className="text-center flex-1 flex flex-col">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Pro</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-900">$9</span>
@@ -291,7 +316,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-gray-600 mb-8">For serious learners</p>
 
-                <ul className="space-y-4 mb-8 text-left">
+                <ul className="space-y-4 mb-8 text-left flex-1">
                   <li className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path
@@ -354,15 +379,15 @@ export default function LandingPage() {
                   </li>
                 </ul>
 
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white mt-auto">
                   Start Pro Trial
                 </Button>
               </div>
             </div>
 
             {/* Team Plan */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 relative">
-              <div className="text-center">
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 relative flex flex-col">
+              <div className="text-center flex-1 flex flex-col">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Team</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-900">$29</span>
@@ -370,7 +395,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-gray-600 mb-8">For classrooms & teams</p>
 
-                <ul className="space-y-4 mb-8 text-left">
+                <ul className="space-y-4 mb-8 text-left flex-1">
                   <li className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path
@@ -433,7 +458,7 @@ export default function LandingPage() {
                   </li>
                 </ul>
 
-                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white">
+                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white mt-auto">
                   Contact Sales
                 </Button>
               </div>
@@ -559,22 +584,17 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">Ready to Transform Your Learning?</h2>
-          <p className="text-xl text-blue-100 mb-8">
+      <section className="py-16 md:py-32 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="mx-auto max-w-5xl px-6 text-center">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 md:mb-6">
+            Ready to Transform Your Learning?
+          </h2>
+          <p className="text-lg md:text-xl text-blue-100 mb-8 md:mb-12 max-w-3xl mx-auto">
             Join thousands of students who are already studying smarter with AI-powered flashcards.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="px-8 py-3 text-lg">
-              Start Free Trial
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="px-8 py-3 text-lg border-white text-white hover:bg-white hover:text-blue-600"
-            >
-              View All Features
+          <div className="flex justify-center">
+            <Button className="px-6 py-3 md:px-16 md:py-6 text-lg md:text-2xl bg-white text-blue-600 hover:bg-blue-50 font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 rounded-xl w-full max-w-sm md:max-w-none">
+              🚀 Start Learning Now
             </Button>
           </div>
         </div>

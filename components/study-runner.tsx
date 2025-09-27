@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress'
 
 type Card = { id: string; front: string; back: string }
 
-export function StudyRunner({ deckId }: { deckId: string }) {
+export function StudyRunner({ deckId, deckTitle }: { deckId: string; deckTitle?: string }) {
   const [card, setCard] = useState<Card | null>(null)
   const [flipped, setFlipped] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -219,70 +219,88 @@ export function StudyRunner({ deckId }: { deckId: string }) {
 
   function endSession() {
     setSessionActive(false)
+    setCard(null) // Clear current card to show completion screen
   }
 
   return (
-    <div className="mt-8">
-      {loading && <div className="text-sm text-[--color-text-secondary]">Loading…</div>}
-      {error && <div className="text-sm text-[--color-error]">{error}</div>}
+    <div className="flex flex-col min-h-screen">
+      {loading && (
+        <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
+          Loading…
+        </div>
+      )}
+      {error && (
+        <div className="flex-1 flex items-center justify-center text-sm text-red-500">{error}</div>
+      )}
       {!loading && !card && (
-        <div className="space-y-4">
-          <div className="text-sm text-[--color-text-secondary]">
-            {seenCount === 0
-              ? 'No cards found in this deck. Add some cards to start studying!'
-              : 'No more cards due. Nice work!'}
-          </div>
-          {seenCount > 0 && (
-            <div className="text-sm">
-              Seen: {seenCount} • Accuracy: {accuracy}% • Time: {Math.floor(elapsedMs / 60000)}:
-              {String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="text-lg text-gray-600">
+              {seenCount === 0
+                ? 'No cards found in this deck. Add some cards to start studying!'
+                : 'No more cards due. Nice work!'}
             </div>
-          )}
-          <div>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSeenCount(0)
-                setCorrectCount(0)
-                setElapsedMs(0)
-                setCurrentIndex(0)
-                setSessionCards([])
-                localStorage.removeItem(sessionKey) // Clear session
-                setSessionActive(true)
-                loadNext()
-              }}
-            >
-              {seenCount === 0 ? 'Try Again' : 'Start New Session'}
-            </Button>
+            {seenCount > 0 && (
+              <div className="text-sm text-gray-500">
+                Seen: {seenCount} • Accuracy: {accuracy}% • Time: {Math.floor(elapsedMs / 60000)}:
+                {String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}
+              </div>
+            )}
+            <div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSeenCount(0)
+                  setCorrectCount(0)
+                  setElapsedMs(0)
+                  setCurrentIndex(0)
+                  setSessionCards([])
+                  localStorage.removeItem(sessionKey) // Clear session
+                  setSessionActive(true)
+                  loadNext()
+                }}
+              >
+                {seenCount === 0 ? 'Try Again' : 'Start New Session'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
       {card && (
-        <Card onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-          <CardHeader>
+        <div className="flex-1 flex flex-col">
+          {/* Progress Header */}
+          <div className="bg-white border-b px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-xl font-semibold">Study Deck: {deckTitle || 'Loading...'}</h1>
+              <Button variant="outline" size="sm" onClick={endSession}>
+                End Session
+              </Button>
+            </div>
             <div className="flex items-center justify-between">
-              <CardTitle>Flashcard</CardTitle>
-              <div className="text-xs text-[--color-text-secondary]">
+              <div className="text-sm text-gray-600">
                 {accuracy}% • {Math.floor(elapsedMs / 60000)}:
                 {String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}
               </div>
+              <div className="text-sm text-gray-600 font-medium">
+                {seenCount} of {sessionCards.length} cards
+              </div>
+              <div></div>
             </div>
-            <div className="mt-2">
+            <div className="mt-3">
               <Progress
                 value={
                   sessionCards.length > 0 ? Math.round((seenCount / sessionCards.length) * 100) : 0
                 }
               />
-              <div className="mt-1 text-xs text-[--color-text-secondary]">
-                {seenCount} of {sessionCards.length} cards
-              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mx-auto max-w-prose">
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100">
+            <div className="w-full max-w-4xl">
               <div
                 className={
-                  'relative mx-auto mt-2 grid h-56 place-items-center rounded-lg border bg-background text-center text-lg transition-transform duration-300 cursor-pointer ' +
+                  'relative mx-auto grid h-80 place-items-center rounded-xl border-2 border-gray-200 bg-white text-center text-xl transition-transform duration-300 cursor-pointer shadow-lg ' +
                   (flipped
                     ? 'rotate-y-180 [transform-style:preserve-3d]'
                     : '[transform-style:preserve-3d]')
@@ -292,65 +310,62 @@ export function StudyRunner({ deckId }: { deckId: string }) {
                 role="button"
                 aria-label={flipped ? 'Hide answer' : 'Show answer'}
               >
-                <div className={'absolute inset-0 grid place-items-center px-6 backface-hidden'}>
-                  <div>Q: {card.front}</div>
+                <div className={'absolute inset-0 grid place-items-center px-8 backface-hidden'}>
+                  <div className="text-2xl font-medium">Q: {card.front}</div>
                 </div>
                 <div
                   className={
-                    'absolute inset-0 grid place-items-center px-6 rotate-y-180 backface-hidden'
+                    'absolute inset-0 grid place-items-center px-8 rotate-y-180 backface-hidden'
                   }
                 >
-                  <div>A: {card.back}</div>
+                  <div className="text-2xl font-medium">A: {card.back}</div>
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <div className="ml-auto" />
-              <Button variant="outline" size="sm" onClick={endSession}>
-                End Session
-              </Button>
-            </div>
+          </div>
 
-            <div className="mt-8 flex flex-col items-center gap-4">
-              <div className="grid grid-cols-4 gap-3 w-full max-w-2xl">
+          {/* Grade Buttons */}
+          <div className="bg-white border-t p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-4 gap-4">
                 <Button
                   variant="destructive"
                   onClick={() => grade(0)}
                   disabled={loading}
-                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white"
+                  className="flex flex-col items-center justify-center py-6 px-4 h-24 text-white"
                 >
-                  <span className="font-semibold text-base">Again</span>
-                  <span className="text-xs opacity-90">Review in 10m</span>
+                  <span className="font-semibold text-lg">Again</span>
+                  <span className="text-sm opacity-90">Review in 10m</span>
                 </Button>
                 <Button
                   onClick={() => grade(1)}
                   disabled={loading}
-                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white bg-blue-600 hover:bg-blue-700"
+                  className="flex flex-col items-center justify-center py-6 px-4 h-24 text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  <span className="font-semibold text-base">Hard</span>
-                  <span className="text-xs opacity-90">Review in 6m</span>
+                  <span className="font-semibold text-lg">Hard</span>
+                  <span className="text-sm opacity-90">Review in 6m</span>
                 </Button>
                 <Button
                   onClick={() => grade(2)}
                   disabled={loading}
-                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white bg-green-600 hover:bg-green-700"
+                  className="flex flex-col items-center justify-center py-6 px-4 h-24 text-white bg-green-600 hover:bg-green-700"
                 >
-                  <span className="font-semibold text-base">Good</span>
-                  <span className="text-xs opacity-90">Review in 1d</span>
+                  <span className="font-semibold text-lg">Good</span>
+                  <span className="text-sm opacity-90">Review in 1d</span>
                 </Button>
                 <Button
                   variant="default"
                   onClick={() => grade(3)}
                   disabled={loading}
-                  className="flex flex-col items-center justify-center py-4 px-3 h-20 text-white bg-blue-600 hover:bg-blue-700"
+                  className="flex flex-col items-center justify-center py-6 px-4 h-24 text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  <span className="font-semibold text-base">Easy</span>
-                  <span className="text-xs opacity-90">Review in 4d</span>
+                  <span className="font-semibold text-lg">Easy</span>
+                  <span className="text-sm opacity-90">Review in 4d</span>
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )
