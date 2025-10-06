@@ -75,12 +75,6 @@ export default async function Dashboard() {
             <div className="flex-1">
               <UserGreeting name={user.user?.email} />
             </div>
-            <a
-              className="rounded-md bg-[--color-accent] px-4 py-2 text-white h-10"
-              href="/decks/new"
-            >
-              Create Deck
-            </a>
           </div>
           <div className="mt-3 flex items-center gap-2 text-sm text-[--color-text-secondary]">
             <Flame className="h-4 w-4 text-red-500" />

@@ -21,9 +21,6 @@ export function DeckList({ decks }: { decks: Deck[] }) {
     <section className="mt-8">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">Your Decks</h2>
-        <a href="/decks/new" className="hidden sm:block">
-          <Button size="sm">Create Deck</Button>
-        </a>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {decks.map((d) => (
@@ -39,7 +36,12 @@ export function DeckList({ decks }: { decks: Deck[] }) {
                   </span>
                 )}
               </CardTitle>
-              {d.description && <CardDescription>{d.description}</CardDescription>}
+              {/* Reserve space even if no description for uniform card height */}
+              {d.description ? (
+                <CardDescription>{d.description}</CardDescription>
+              ) : (
+                <div className="min-h-[20px]" />
+              )}
             </CardHeader>
             <CardContent className="flex flex-col">
               <div className="flex items-center justify-between gap-2 mt-1">
