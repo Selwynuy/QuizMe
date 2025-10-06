@@ -7,13 +7,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { GlobalNavbar } from '@/components/global-navbar'
 import Link from 'next/link'
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <GlobalNavbar />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background Elements */}

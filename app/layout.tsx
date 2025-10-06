@@ -23,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased font-sans`}>
+        <GlobalNavbar />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
