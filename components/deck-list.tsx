@@ -27,7 +27,7 @@ export function DeckList({ decks }: { decks: Deck[] }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {decks.map((d) => (
-          <Card key={d.id} className="hover:shadow rounded-xl">
+          <Card key={d.id} className="hover:shadow rounded-xl h-full">
             <CardHeader>
               <CardTitle className="text-base flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -41,24 +41,30 @@ export function DeckList({ decks }: { decks: Deck[] }) {
               </CardTitle>
               {d.description && <CardDescription>{d.description}</CardDescription>}
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between gap-2">
+            <CardContent className="flex flex-col">
+              <div className="flex items-center justify-between gap-2 mt-1">
                 <a href={`/study/${d.id}`}>
-                  <Button size="sm" className="bg-[--color-accent] text-white">
+                  <Button
+                    size="sm"
+                    className="text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
                     Study Now
                   </Button>
                 </a>
                 <a href={`/decks/${d.id}`}>
-                  <Button size="sm" variant="outline">
+                  <Button
+                    size="sm"
+                    className="text-[--color-text] bg-gray-100 hover:bg-gray-200 border border-gray-200"
+                  >
                     Edit
                   </Button>
                 </a>
               </div>
-              {d.lastReviewedAt && (
-                <div className="mt-3 text-xs text-[--color-text-secondary]">
-                  Last reviewed {new Date(d.lastReviewedAt).toLocaleDateString()}
-                </div>
-              )}
+              <div className="mt-3 text-xs text-[--color-text-secondary]">
+                {d.lastReviewedAt
+                  ? `Last reviewed ${new Date(d.lastReviewedAt).toLocaleDateString()}`
+                  : 'Not reviewed yet'}
+              </div>
             </CardContent>
           </Card>
         ))}
