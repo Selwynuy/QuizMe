@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Trophy, BookOpen, Flame, BarChart3 } from 'lucide-react'
 
 export function ProgressDashboard() {
   const [data, setData] = useState<{
@@ -28,36 +29,48 @@ export function ProgressDashboard() {
 
   return (
     <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-lg border bg-white p-5">
-        <div className="text-sm text-[--color-text-secondary]">Decks Created</div>
-        <div className="mt-2 text-2xl font-semibold">{decksCount}</div>
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[--color-text-secondary]">Decks Created</div>
+          <BookOpen className="h-5 w-5 text-blue-600" />
+        </div>
+        <div className="mt-2 text-3xl font-bold">{decksCount}</div>
         <div className="mt-3 h-2 w-full rounded bg-gray-100">
           <div
-            className="h-2 rounded bg-[--color-primary]"
+            className="h-2 rounded bg-blue-500"
             style={{ width: `${Math.min(decksCount * 10, 100)}%` }}
           />
         </div>
       </div>
-      <div className="rounded-lg border bg-white p-5">
-        <div className="text-sm text-[--color-text-secondary]">Reviews (7d)</div>
-        <div className="mt-2 text-2xl font-semibold">{total}</div>
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[--color-text-secondary]">Reviews (7d)</div>
+          <BarChart3 className="h-5 w-5 text-purple-600" />
+        </div>
+        <div className="mt-2 text-3xl font-bold">{total}</div>
         <div className="mt-3 h-2 w-full rounded bg-gray-100">
           <div
-            className="h-2 rounded bg-[--color-secondary]"
+            className="h-2 rounded bg-purple-500"
             style={{ width: `${Math.min(total, 100)}%` }}
           />
         </div>
       </div>
-      <div className="rounded-lg border bg-white p-5">
-        <div className="text-sm text-[--color-text-secondary]">Accuracy</div>
-        <div className="mt-2 text-2xl font-semibold">{accuracy}%</div>
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[--color-text-secondary]">Accuracy</div>
+          <Trophy className="h-5 w-5 text-amber-500" />
+        </div>
+        <div className="mt-2 text-3xl font-bold">{accuracy}%</div>
         <div className="mt-3 h-2 w-full rounded bg-gray-100">
-          <div className="h-2 rounded bg-[--color-accent]" style={{ width: `${accuracy}%` }} />
+          <div className="h-2 rounded bg-amber-400" style={{ width: `${accuracy}%` }} />
         </div>
       </div>
-      <div className="rounded-lg border bg-white p-5">
-        <div className="text-sm text-[--color-text-secondary]">Streak</div>
-        <div className="mt-2 text-2xl font-semibold">{streak}d</div>
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[--color-text-secondary]">Current Streak</div>
+          <Flame className="h-5 w-5 text-red-500" />
+        </div>
+        <div className="mt-2 text-3xl font-bold">{streak}d</div>
         <div className="mt-3 text-xs text-[--color-text-secondary]">Past 7 days</div>
       </div>
     </section>

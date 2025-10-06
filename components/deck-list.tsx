@@ -7,6 +7,7 @@ type Deck = {
 }
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { BookMarked } from 'lucide-react'
 
 export function DeckList({ decks }: { decks: Deck[] }) {
   if (!decks?.length) {
@@ -26,10 +27,12 @@ export function DeckList({ decks }: { decks: Deck[] }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {decks.map((d) => (
-          <Card key={d.id} className="hover:shadow">
+          <Card key={d.id} className="hover:shadow rounded-xl">
             <CardHeader>
               <CardTitle className="text-base flex items-center justify-between">
-                <span>{d.title}</span>
+                <span className="flex items-center gap-2">
+                  <BookMarked className="h-4 w-4 text-blue-600" /> {d.title}
+                </span>
                 {typeof d.cardsCount === 'number' && (
                   <span className="text-xs font-normal text-[--color-text-secondary]">
                     {d.cardsCount} cards
