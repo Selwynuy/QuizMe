@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { updateMyProfile } from '@/lib/actions/profile'
 import { useToast } from '@/components/toast-provider'
 
@@ -30,21 +31,37 @@ export function ProfileSettings({
       <CardHeader>
         <CardTitle>Profile Settings</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-5">
+        {msg && (
+          <div
+            className={`rounded-md p-3 text-sm ${msg === 'Saved' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+          >
+            {msg === 'Saved' ? 'Profile updated!' : msg}
+          </div>
+        )}
         <div className="grid gap-2">
-          <label className="text-sm">Full name</label>
+          <label className="text-sm font-medium">Full name</label>
           <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={emailN} onChange={(e) => setEmailN(e.target.checked)} />{' '}
-          Email notifications
-        </label>
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={pushN} onChange={(e) => setPushN(e.target.checked)} />{' '}
-          Push notifications
-        </label>
-        <div className="flex items-center gap-3">
+        <div className="grid gap-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <div className="font-medium">Email notifications</div>
+              <div className="text-[--color-text-secondary]">Receive updates via email</div>
+            </div>
+            <Switch checked={emailN} onCheckedChange={(v) => setEmailN(v)} />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <div className="font-medium">Push notifications</div>
+              <div className="text-[--color-text-secondary]">Get reminders on your device</div>
+            </div>
+            <Switch checked={pushN} onCheckedChange={(v) => setPushN(v)} />
+          </div>
+        </div>
+        <div className="flex items-center justify-end">
           <Button
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
             disabled={saving}
             onClick={async () => {
               setSaving(true)
@@ -64,7 +81,6 @@ export function ProfileSettings({
           >
             {saving ? 'Saving…' : 'Save changes'}
           </Button>
-          {msg && <div className="text-sm text-[--color-text-secondary]">{msg}</div>}
         </div>
       </CardContent>
     </Card>

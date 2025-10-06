@@ -114,6 +114,8 @@ create policy profiles_insert_self on public.profiles
 -- Safe alters for added columns if table already exists
 alter table public.profiles add column if not exists email_notifications boolean not null default true;
 alter table public.profiles add column if not exists push_notifications boolean not null default false;
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists avatar_updated_at timestamptz;
 
 -- Decks: owner full access, public readable when is_public
 drop policy if exists decks_owner_rw on public.decks;
