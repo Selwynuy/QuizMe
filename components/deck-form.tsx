@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react'
 import { PdfUpload } from '@/components/pdf-upload'
 import { AIGenerate } from '@/components/ai-generate'
+import { EnhancedUpload } from '@/components/enhanced-upload'
+import { GoalSetting } from '@/components/goal-setting'
+import { ContentPreview } from '@/components/content-preview'
+import { CardReview } from '@/components/card-review'
+import { DeckOrganization } from '@/components/deck-organization'
+import { StudyIntegration } from '@/components/study-integration'
 import { createDeck } from '@/lib/actions/decks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,6 +16,8 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
 export function DeckForm() {
+  const [currentStep, setCurrentStep] = useState(1)
+  const [studyGoal, setStudyGoal] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
@@ -17,6 +25,13 @@ export function DeckForm() {
   const [draftCards, setDraftCards] = useState<{ front: string; back: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showContentPreview, setShowContentPreview] = useState(false)
+  const [showCardReview, setShowCardReview] = useState(false)
+  const [showOrganization, setShowOrganization] = useState(false)
+  const [showStudyIntegration, setShowStudyIntegration] = useState(false)
+  const [tags, setTags] = useState<string[]>([])
+  const [difficulty, setDifficulty] = useState('intermediate')
+  const [createdDeckId, setCreatedDeckId] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -24,6 +39,8 @@ export function DeckForm() {
       if (cached) {
         setNotes(cached)
         localStorage.removeItem('deck_notes')
+        // If we have pre-uploaded content, show content preview immediately
+        setShowContentPreview(true)
       }
 
       // Load pre-generated cards from PDF upload
@@ -32,15 +49,67 @@ export function DeckForm() {
         const cards = JSON.parse(generatedCards)
         setDraftCards(cards)
         localStorage.removeItem('generated_cards')
+        // If we have pre-generated cards, show card review immediately
+        setShowCardReview(true)
       }
     } catch {}
   }, [])
 
-  async function handleSave() {
-    if (!title.trim()) {
-      setError('Title is required')
-      return
+  function handleGoalSelect(goal: string) {
+    setStudyGoal(goal)
+    setCurrentStep(2)
+  }
+
+  function handleNext() {
+    if (currentStep === 2) {
+      if (!title.trim()) {
+        setError('Title is required')
+        return
+      }
+      setError(null)
+      setCurrentStep(3)
     }
+  }
+
+  function handleBack() {
+    if (currentStep === 2) {
+      setCurrentStep(1)
+    } else if (currentStep === 3) {
+      setCurrentStep(2)
+    }
+  }
+
+  function handleContentGenerated(content: string) {
+    setNotes(content)
+    setShowContentPreview(true)
+  }
+
+  function handleContentPreviewContinue() {
+    setShowContentPreview(false)
+    setShowCardReview(true)
+  }
+
+  function handleContentPreviewBack() {
+    setShowContentPreview(false)
+  }
+
+  function handleCardReviewContinue() {
+    setShowCardReview(false)
+    setShowOrganization(true)
+  }
+
+  function handleCardReviewBack() {
+    setShowCardReview(false)
+    setShowContentPreview(true)
+  }
+
+  function handleGenerateMoreCards() {
+    // This would trigger another AI generation
+    setShowCardReview(false)
+    setShowContentPreview(true)
+  }
+
+  async function handleSave() {
     setSaving(true)
     setError(null)
     const { data, error } = await createDeck({
@@ -54,100 +123,205 @@ export function DeckForm() {
       setError(error)
       return
     }
-    if (data) window.location.href = `/decks/${data.id}`
+    if (data) {
+      setCreatedDeckId(data.id)
+      setShowOrganization(false)
+      setShowStudyIntegration(true)
+    }
+  }
+
+  function handleStartStudy() {
+    if (createdDeckId) {
+      window.location.href = `/study/${createdDeckId}`
+    }
+  }
+
+  function handleSaveForLater() {
+    if (createdDeckId) {
+      window.location.href = `/decks/${createdDeckId}`
+    }
   }
 
   return (
     <div className="grid gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Deck</CardTitle>
-          <CardDescription>Title, description, privacy</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="deck-title">Title</Label>
-            <Input
-              id="deck-title"
-              placeholder="e.g. Biology - Cell Structure"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
+      {/* Progress indicator */}
+      <div className="flex items-center gap-4">
+        <div
+          className={`flex items-center gap-2 ${currentStep >= 1 ? 'text-primary' : 'text-muted-foreground'}`}
+        >
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${
+              currentStep >= 1
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-muted-foreground'
+            }`}
+          >
+            1
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="deck-desc">Description</Label>
-            <textarea
-              id="deck-desc"
-              className="rounded-md border px-3 py-2"
-              rows={3}
-              placeholder="Optional"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+          <span className="text-sm font-medium">Goal Setting</span>
+        </div>
+        <div className="flex-1 h-px bg-border"></div>
+        <div
+          className={`flex items-center gap-2 ${currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}
+        >
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${
+              currentStep >= 2
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-muted-foreground'
+            }`}
+          >
+            2
           </div>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-            />
-            Make deck public
-          </label>
-        </CardContent>
-      </Card>
+          <span className="text-sm font-medium">Deck Details</span>
+        </div>
+        <div className="flex-1 h-px bg-border"></div>
+        <div
+          className={`flex items-center gap-2 ${currentStep >= 3 ? 'text-primary' : 'text-muted-foreground'}`}
+        >
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${
+              currentStep >= 3
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-muted-foreground'
+            }`}
+          >
+            3
+          </div>
+          <span className="text-sm font-medium">Add Content</span>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload PDF</CardTitle>
-          <CardDescription>Optional: attach study material</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PdfUpload
-            onUploaded={() => {}}
-            onParsed={(t) => setNotes((prev) => (prev ? prev + '\n\n' + t : t))}
-          />
-        </CardContent>
-      </Card>
+      {currentStep === 1 && <GoalSetting onGoalSelect={handleGoalSelect} />}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Flashcard Generation</CardTitle>
-          <CardDescription>Paste notes and generate drafts</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <textarea
-            className="rounded-md border px-3 py-2"
-            rows={8}
-            placeholder="Paste notes or extracted text here"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <AIGenerate getText={() => notes} onResult={setDraftCards} />
-          {draftCards.length > 0 && (
-            <div>
-              <div className="font-medium">Preview ({draftCards.length})</div>
-              <ul className="mt-3 grid gap-2">
-                {draftCards.map((c, i) => (
-                  <li key={i} className="rounded border p-3">
-                    <div className="text-sm font-medium">Q: {c.front}</div>
-                    <div className="text-sm text-[--color-text-secondary]">A: {c.back}</div>
-                  </li>
-                ))}
-              </ul>
+      {currentStep === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Deck Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="deck-title">Title</Label>
+              <Input
+                id="deck-title"
+                placeholder="e.g. Biology - Cell Structure"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="grid gap-2">
+              <Label htmlFor="deck-desc">Description</Label>
+              <textarea
+                id="deck-desc"
+                className="rounded-md border px-3 py-2"
+                rows={3}
+                placeholder="Optional"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+              />
+              Make deck public
+            </label>
+          </CardContent>
+        </Card>
+      )}
+
+      {currentStep === 3 && !showContentPreview && !showCardReview && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Content</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Choose how you want to add your study content
+            </p>
+          </CardHeader>
+          <CardContent>
+            <EnhancedUpload
+              onContentGenerated={handleContentGenerated}
+              onCardsGenerated={setDraftCards}
+              hasExistingContent={notes.length > 0}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {showContentPreview && (
+        <ContentPreview
+          content={notes}
+          onContentChange={setNotes}
+          onContinue={handleContentPreviewContinue}
+          onBack={handleContentPreviewBack}
+        />
+      )}
+
+      {showCardReview && (
+        <CardReview
+          cards={draftCards}
+          onCardsChange={setDraftCards}
+          onContinue={handleCardReviewContinue}
+          onGenerateMore={handleGenerateMoreCards}
+          onBack={handleCardReviewBack}
+        />
+      )}
+
+      {showOrganization && (
+        <DeckOrganization
+          title={title}
+          description={description}
+          isPublic={isPublic}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onPublicChange={setIsPublic}
+          onTagsChange={setTags}
+          onDifficultyChange={setDifficulty}
+          onSave={handleSave}
+          onBack={() => setShowOrganization(false)}
+          saving={saving}
+        />
+      )}
+
+      {showStudyIntegration && createdDeckId && (
+        <StudyIntegration
+          deckId={createdDeckId}
+          deckTitle={title}
+          cardCount={draftCards.length}
+          onStartStudy={handleStartStudy}
+          onSaveForLater={handleSaveForLater}
+        />
+      )}
 
       {error && <div className="text-sm text-[--color-error]">{error}</div>}
-      <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Deck'}
-        </Button>
-        <Button variant="outline" asChild>
-          <a href="/dashboard">Cancel</a>
-        </Button>
-      </div>
+
+      {!showContentPreview && !showCardReview && !showOrganization && !showStudyIntegration && (
+        <div className="flex gap-3">
+          {currentStep === 1 ? (
+            <Button variant="outline" asChild>
+              <a href="/dashboard">Cancel</a>
+            </Button>
+          ) : currentStep === 2 ? (
+            <>
+              <Button onClick={handleNext}>Next</Button>
+              <Button onClick={handleBack} variant="outline">
+                Back
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving…' : 'Save Deck'}
+              </Button>
+              <Button onClick={handleBack} variant="outline">
+                Back
+              </Button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }

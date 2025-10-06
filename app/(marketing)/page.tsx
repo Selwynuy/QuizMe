@@ -30,16 +30,16 @@ export default function LandingPage() {
                   AI-Powered Learning Platform
                 </div>
                 <h1 className="text-5xl font-bold tracking-tight text-gray-900 lg:text-6xl">
-                  Study Smarter, Not
+                  Create Flashcards from
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     {' '}
-                    Harder
+                    Any Content
                   </span>
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Transform any content into intelligent flashcards with AI. Our smart spaced
-                  repetition system adapts to your learning pace, ensuring maximum retention with
-                  minimum effort.
+                  Upload PDFs, paste text, or share URLs. Our AI instantly transforms your study
+                  materials into personalized flashcards. Study smarter with spaced repetition that
+                  adapts to your pace.
                 </p>
               </div>
 

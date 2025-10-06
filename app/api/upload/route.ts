@@ -22,7 +22,17 @@ export async function POST(request: Request) {
     contentType: 'application/pdf',
     upsert: false,
   })
-  if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
+  if (uploadError) {
+    console.error('Upload error:', uploadError)
+    return NextResponse.json(
+      {
+        error: uploadError.message.includes('Bucket not found')
+          ? 'Storage bucket not configured. Please contact support.'
+          : uploadError.message,
+      },
+      { status: 500 },
+    )
+  }
 
   const { data: signed, error: signError } = await supabase.storage
     .from('uploads')
