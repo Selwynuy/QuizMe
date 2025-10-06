@@ -36,5 +36,11 @@ export async function GET() {
     else if (i !== 0) break
   }
 
-  return NextResponse.json({ totalReviews7d: total, accuracy, streak })
+  // decks count for this user
+  const { count: decksCount } = await supabase
+    .from('decks')
+    .select('id', { count: 'exact', head: true })
+    .eq('owner_id', user.user.id)
+
+  return NextResponse.json({ totalReviews7d: total, accuracy, streak, decksCount: decksCount || 0 })
 }

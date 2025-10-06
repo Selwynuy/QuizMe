@@ -7,6 +7,7 @@ export function ProgressDashboard() {
     totalReviews7d: number
     accuracy: number
     streak: number
+    decksCount: number
   } | null>(null)
 
   useEffect(() => {
@@ -23,9 +24,20 @@ export function ProgressDashboard() {
   const total = data?.totalReviews7d ?? 0
   const accuracy = data?.accuracy ?? 0
   const streak = data?.streak ?? 0
+  const decksCount = data?.decksCount ?? 0
 
   return (
-    <section className="mt-8 grid gap-4 sm:grid-cols-3">
+    <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-lg border bg-white p-5">
+        <div className="text-sm text-[--color-text-secondary]">Decks Created</div>
+        <div className="mt-2 text-2xl font-semibold">{decksCount}</div>
+        <div className="mt-3 h-2 w-full rounded bg-gray-100">
+          <div
+            className="h-2 rounded bg-[--color-primary]"
+            style={{ width: `${Math.min(decksCount * 10, 100)}%` }}
+          />
+        </div>
+      </div>
       <div className="rounded-lg border bg-white p-5">
         <div className="text-sm text-[--color-text-secondary]">Reviews (7d)</div>
         <div className="mt-2 text-2xl font-semibold">{total}</div>
