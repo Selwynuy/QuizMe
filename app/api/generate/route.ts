@@ -5,9 +5,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing OPENAI_API_KEY' }, { status: 500 })
   }
 
-  const body = (await request.json().catch(() => null)) as { text?: string; count?: number } | null
+  const body = (await request.json().catch(() => null)) as { text?: string } | null
   const text = body?.text?.toString().slice(0, 20000) || ''
-  const count = Math.min(Math.max(Number(body?.count ?? 12), 1), 50)
+  // Sensible default count; can be made adaptive later
+  const count = 16
   if (!text) return NextResponse.json({ error: 'text is required' }, { status: 400 })
 
   const system = `You generate study flashcards from input material.

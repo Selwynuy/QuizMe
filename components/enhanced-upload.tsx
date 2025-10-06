@@ -23,7 +23,7 @@ export function EnhancedUpload({
   const [uploadMethod, setUploadMethod] = useState<'file' | 'text' | 'url'>('file')
   const [textContent, setTextContent] = useState('')
   const [urlInput, setUrlInput] = useState('')
-  const [cardCount, setCardCount] = useState(5)
+  // Default generation size handled server-side; no explicit count in MVP
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -59,7 +59,7 @@ export function EnhancedUpload({
     try {
       const form = new FormData()
       form.append('file', file)
-      form.append('count', cardCount.toString())
+      // count omitted; server will decide sensible default
 
       const res = await fetch('/api/parse-and-generate', { method: 'POST', body: form })
       const json = await res.json()
@@ -88,7 +88,7 @@ export function EnhancedUpload({
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textContent, count: cardCount }),
+        body: JSON.stringify({ text: textContent }),
       })
       const json = await res.json()
 
@@ -133,7 +133,7 @@ export function EnhancedUpload({
       const generateRes = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: json.content, count: cardCount }),
+        body: JSON.stringify({ text: json.content }),
       })
       const generateJson = await generateRes.json()
 
@@ -187,19 +187,7 @@ export function EnhancedUpload({
         </Button>
       </div>
 
-      {/* Card Count */}
-      <div className="grid gap-2">
-        <label className="text-sm font-medium">Number of flashcards to generate</label>
-        <Input
-          type="number"
-          min="1"
-          max="50"
-          value={cardCount}
-          onChange={(e) => setCardCount(Math.min(Math.max(Number(e.target.value), 1), 50))}
-          className="w-32"
-          disabled={isUploading}
-        />
-      </div>
+      {/* Card count removed for MVP simplicity; server chooses sensible default */}
 
       {/* File Upload */}
       {uploadMethod === 'file' && (
@@ -256,9 +244,7 @@ export function EnhancedUpload({
               disabled={isUploading}
             />
             <Button onClick={handleTextGeneration} disabled={isUploading || !textContent.trim()}>
-              {isUploading
-                ? `Generating ${cardCount} flashcards...`
-                : `Generate ${cardCount} Flashcards`}
+              {isUploading ? 'Generating flashcards...' : 'Generate Flashcards'}
             </Button>
           </CardContent>
         </Card>
@@ -292,7 +278,7 @@ export function EnhancedUpload({
         <div className="text-center py-4">
           <div className="inline-flex items-center gap-2 text-blue-600">
             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            Processing content and generating {cardCount} flashcards...
+            Processing content and generating flashcards...
           </div>
         </div>
       )}

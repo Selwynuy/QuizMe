@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
     const formData: FormData = await req.formData()
     const uploaded = formData.getAll('file')
     const uploadedFiles = uploaded.length ? uploaded : formData.getAll('FILE')
-    const count = Math.min(Math.max(Number(formData.get('count') ?? 12), 1), 50)
+    // Default generation size; no client-provided count in MVP
+    const count = 16
 
     console.log('Form data received:', {
       uploadedFilesCount: uploadedFiles.length,
