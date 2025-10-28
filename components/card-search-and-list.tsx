@@ -32,3 +32,6 @@ export function CardSearchAndList({ deckId }: { deckId: string }) {
     </div>
   )
 }
+
+
+
